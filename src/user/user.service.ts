@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-misused-promises */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
@@ -7,6 +8,9 @@ import { UserEntity } from "./user.entity";
 import { Repository } from "typeorm";
 import { JwtService } from '@nestjs/jwt';
 import { IUserResponse } from "./types/userResponse.interface";
+import { LoginDto } from "./dto/loginUser.dto";
+import { compare } from "bcryptjs";
+import { IUser } from "./types/user.type";
 
 
 @Injectable()
@@ -34,21 +38,38 @@ export class UserService{
         return this.generateUserResponse(savedUser);
     }
 
-    generateToken(user: UserEntity): string{
+
+    async loginUser(loginUserDto: LoginDto): Promise<IUser>{
+        const user = await this.userRepository.findOne({where: {email: loginUserDto.email}, select: ['id', 'email', 'username','bio', 'image', 'password']})
+        if(!user){
+            throw new HttpException('Wrong Email', HttpStatus.UNAUTHORIZED);
+        }
+
+        const matchPassword = await compare(loginUserDto.password, user.password);
+
+        if(!matchPassword){
+            throw new HttpException('Wrong Password', HttpStatus.UNAUTHORIZED);
+        }
+
+        const {password, ...safeUser} = user;
+        return safeUser;
+    }
+
+    generateToken(user: IUser): string{
         const generatedToken = this.jwtService.sign({
             id: user.id,
             username: user.username,
             email: user.email
         })
 
-        // const decoded = this.jwtService.verify(generatedToken);
         console.log(process.env.JWT_SECRET);
 
         return generatedToken
     }
 
 
-    generateUserResponse(user: UserEntity): IUserResponse{
+
+    generateUserResponse(user: IUser): IUserResponse{
         return {
             user: {
                 ...user,
