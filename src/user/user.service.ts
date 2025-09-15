@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-misused-promises */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
@@ -38,6 +39,16 @@ export class UserService{
         return this.generateUserResponse(savedUser);
     }
 
+    async findById(id: number): Promise<UserEntity>{
+        const user = await this.userRepository.findOne({where: {id}})
+
+        if(!user){
+            throw new HttpException(`User with id -> ${id} not found`, HttpStatus.NOT_FOUND);
+        }
+
+        return user;
+    }
+
 
     async loginUser(loginUserDto: LoginDto): Promise<IUser>{
         const user = await this.userRepository.findOne({where: {email: loginUserDto.email}, select: ['id', 'email', 'username','bio', 'image', 'password']})
@@ -56,15 +67,11 @@ export class UserService{
     }
 
     generateToken(user: IUser): string{
-        const generatedToken = this.jwtService.sign({
-            id: user.id,
-            username: user.username,
-            email: user.email
-        })
-
-        console.log(process.env.JWT_SECRET);
-
-        return generatedToken
+        return this.jwtService.sign({
+          id: user.id,
+          username: user.username,
+          email: user.email,
+        });
     }
 
 
