@@ -12,6 +12,7 @@ import { IUserResponse } from "./types/userResponse.interface";
 import { LoginDto } from "./dto/loginUser.dto";
 import { compare } from "bcryptjs";
 import { IUser } from "./types/user.type";
+import { UpdateUserDto } from "./dto/updateUserDto";
 
 
 @Injectable()
@@ -74,14 +75,16 @@ export class UserService{
         });
     }
 
+    async updateUser(userId: number ,updateUserDto: UpdateUserDto){
+        const user = await this.findById(userId)
+        Object.assign(user, updateUserDto);
+
+        return await this.userRepository.save(user);
+    }
+
 
 
     generateUserResponse(user: IUser): IUserResponse{
-
-        if(!user.id){
-            throw new HttpException("User data is missing", HttpStatus.BAD_REQUEST);
-        }
-
         return {
             user: {
                 ...user,
