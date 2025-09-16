@@ -5,7 +5,7 @@ import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 import { UserService } from "../user.service";
 import { AuthRequest } from "types/expressRequest.interface";
-import { verify } from "jsonwebtoken";
+import { UserEntity } from "../user.entity";
 
 @Injectable()
 export class AuthMiddleware implements NestMiddleware{
@@ -15,24 +15,26 @@ export class AuthMiddleware implements NestMiddleware{
         private readonly userService: UserService
     ){}
 
-    use(req: AuthRequest, res: Response, next: NextFunction) {        
+    async use(req: AuthRequest, res: Response, next: NextFunction) {        
       if (!req.headers.authorization) {
-        req.user = null;
+        req.user = new UserEntity();
         return next();
       }
 
       const token = req.headers.authorization.split(' ')[1];
 
       try {
-        const decoded = this.jwt.verify(token); // ✅ secret comes from JwtModule
+        const decoded = this.jwt.verify(token);
         console.log('✅ Decoded:', decoded);
-        req.user = decoded;
-      } catch (err) {
+        const user = await this.userService.findById(decoded.id);
+        req.user = user;
+        next();
+      } 
+      catch (err) {
         console.error('❌ Invalid token:', err.message);
-        req.user = null;
+        req.user = new UserEntity();
+        next();
       }
-
-      return next();
     }
 
 }
