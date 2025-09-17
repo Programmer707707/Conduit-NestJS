@@ -1,11 +1,12 @@
 import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { ArticleEntity } from "./article.entity";
-import { Repository } from "typeorm";
+import { DeleteResult, Repository } from "typeorm";
 import { UserEntity } from "src/user/user.entity";
-import { CreateArticleDto } from "./createArticle.dto";
+import { CreateArticleDto } from "./dto/createArticle.dto";
 import { IArticleResponse } from "./types/articleResponse.interface";
 import slugify from "slugify";
+import { UpdateArticleDto } from "./dto/updateArticle.dto";
 
 @Injectable()
 export class ArticleService{
@@ -35,6 +36,41 @@ export class ArticleService{
         }
 
         return this.generateArticleResponse(article);
+    }
+
+    async deleteSingleArticle(slug: string, userId: number): Promise<DeleteResult>{
+        const article = await this.articleRepository.findOne({where: {slug}, relations: ['author']});
+
+        if(!article){
+            throw new HttpException('Article is not found!', HttpStatus.NOT_FOUND);
+        }
+
+        if(article.authorId !== userId){
+            throw new HttpException('You are not the author of this article', HttpStatus.FORBIDDEN);
+        }
+
+        return await this.articleRepository.delete({ slug });
+    }
+
+    async updateArticle(slug: string, userId: number, updatedArticleDto: UpdateArticleDto): Promise<ArticleEntity>{
+        const article = await this.articleRepository.findOne({where: {slug}, relations: ['author']});
+
+        if(!article){
+            throw new HttpException('Article is not found!', HttpStatus.NOT_FOUND);
+        }
+
+        if(article.authorId !== userId){
+            throw new HttpException('You are not the author of this article', HttpStatus.FORBIDDEN);
+        }
+
+        if(updatedArticleDto.title){
+            article.slug = this.generateSlug(article.title);
+        }
+
+        Object.assign(article, updatedArticleDto);
+
+        return await this.articleRepository.save(article);
+        
     }
 
     generateSlug(title: string): string{

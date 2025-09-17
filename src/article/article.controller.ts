@@ -1,11 +1,13 @@
-import { Body, Controller, Get, Param, Post, UseGuards, UsePipes, ValidationPipe } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards, UsePipes, ValidationPipe } from "@nestjs/common";
 import { User } from "src/user/decorators/user.decorator";
 import { UserEntity } from "src/user/user.entity";
-import { CreateArticleDto } from "./createArticle.dto";
+import { CreateArticleDto } from "./dto/createArticle.dto";
 import { ArticleService } from "./article.service";
 import { ArticleEntity } from "./article.entity";
 import { AuthGuard } from "src/user/guards/auth.guard";
 import { IArticleResponse } from "./types/articleResponse.interface";
+import { DeleteResult } from "typeorm";
+import { UpdateArticleDto } from "./dto/updateArticle.dto";
 
 @Controller('articles')
 export class ArticleController{
@@ -20,8 +22,22 @@ export class ArticleController{
     }
 
     @Get(':slug')
-    @UseGuards(AuthGuard)
     async getArticleBySlug(@Param('slug') slug: string): Promise<IArticleResponse>{
         return this.articleService.getSingleArticle(slug);
+    }
+
+    @Put(':slug')
+    @UseGuards(AuthGuard)
+    async updateArticle(@Param('slug') slug: string, @User('id') userId: number, @Body('article') updatedArticleDto: UpdateArticleDto): Promise<IArticleResponse>{
+        const updatedArticle = await this.articleService.updateArticle(slug, userId, updatedArticleDto);
+
+        return this.articleService.generateArticleResponse(updatedArticle);
+
+    }
+
+    @Delete(':slug')
+    @UseGuards(AuthGuard)
+    async deleteArticleBySlug(@Param('slug') slug: string, @User('id') userId: number): Promise<DeleteResult>{
+        return this.articleService.deleteSingleArticle(slug, userId);
     }
 }
