@@ -1,6 +1,7 @@
-import { BeforeInsert, BeforeUpdate, Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { BeforeInsert, BeforeUpdate, Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import * as bcrypt from 'bcryptjs';
 import { Exclude } from "class-transformer";
+import { ArticleEntity } from "../article/article.entity";
 
 @Entity({name: 'users'})
 export class UserEntity{
@@ -21,6 +22,9 @@ export class UserEntity{
 
     @Column()
     password: string;
+
+    @OneToMany(() => ArticleEntity, (article) => article.author)
+    articles: ArticleEntity[]
 
     @BeforeInsert()
     @BeforeUpdate()

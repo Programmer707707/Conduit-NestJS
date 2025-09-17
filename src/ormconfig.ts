@@ -2,6 +2,7 @@ import { PostgresConnectionOptions } from "typeorm/driver/postgres/PostgresConne
 import { TagEntity } from "./tag/tag.entity";
 import { UserEntity } from "./user/user.entity";
 import { DataSource } from "typeorm";
+import { ArticleEntity } from "./article/article.entity";
 
 
 const config: PostgresConnectionOptions = {
@@ -11,7 +12,7 @@ const config: PostgresConnectionOptions = {
     username: 'toxirovsherzod',
     password: 'sherzod2005',
     database: 'nestjsblog',
-    entities: [TagEntity, UserEntity],
+    entities: [TagEntity, UserEntity, ArticleEntity],
     migrationsTableName: 'migrations',
     migrations: [__dirname + '/migrations/**/*.ts']
 }
